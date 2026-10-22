@@ -22,14 +22,14 @@ Engineered an event-driven, real-time Lead Injection Pipeline that captures, cle
 * **Enrichment Cascades:** Configured fallback API enrichment sequences to maximize coverage while minimizing vendor API costs.
 * **Dynamic Routing:** Programmatically assigns leads to the correct sales rep based on territory, account size, and existing ownership rules, triggering immediate Slack notifications for tier-1 accounts.
 
-### Tech Stack
+
 | Layer | Component / Tool | Function |
 | :--- | :--- | :--- |
-| **Ingestion** | Webhooks, AWS API Gateway | Real-time payload capture |
-| **Orchestration** | Python, AWS Lambda, Make | Data transformation & conditional execution |
-| **Enrichment** | Clearbit API, Apollo API, Debounce | Contact & firmographic data enrichment |
-| **Storage & Sync** | PostgreSQL, Salesforce REST API | Identity resolution & CRM record creation |
-| **Alerting** | Slack Webhooks | Immediate notification for high-priority leads |
+| **Ingestion** | Python, n8n Webhooks | Real-time payload capture and API routing |
+| **Orchestration** | self-hosted n8n (Docker) | Data transformation, conditional logic, and workflow automation |
+| **Enrichment** | OpenAI API | Dynamic lead scoring and personalized message generation |
+| **Storage & Sync** | HubSpot CRM API | Automated contact creation and property mapping |
+| **Alerting** | Slack / Discord Node | Real-time team notifications for high-scoring leads |
 
 ### Results
 * **98% Reduction in Speed-to-Lead:** Decreased time-from-intent to sales outreach from 48 hours to under 3 minutes.
@@ -52,10 +52,11 @@ Designed and deployed an AI-assisted Company Research Pipeline that automaticall
 ### Tech Stack
 | Layer | Component / Tool | Function |
 | :--- | :--- | :--- |
-| **Scraping** | Python, Playwright, BeautifulSoup | Scraping unstructured web & career pages |
-| **AI / LLM** | OpenAI API (GPT-4o), LangChain | Information extraction & summary generation |
-| **Orchestration** | Zapier, Node.js | Queue management & platform triggers |
-| **Integration** | HubSpot API, Salesforce API | Bi-directional sync of structured insights |
+| **Ingestion** | Python `requests` | Batch processing of target company domains |
+| **Orchestration** | self-hosted n8n (Docker) | Array splitting, JSON parsing, and API orchestration |
+| **Enrichment** | OpenAI API (gpt-4o-mini) | Unstructured data extraction and JSON structuring |
+| **Storage & Sync** | Google Sheets, HubSpot CRM | Bi-directional sync of structured company insights |
+| **Alerting** | Telegram Bot API | Automated push notifications for high-fit target accounts |
 
 ### Results
 * **Time Saved:** Reduced manual rep research time from 18 minutes to 0 minutes per account.
