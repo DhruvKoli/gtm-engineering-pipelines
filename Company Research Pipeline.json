@@ -1,0 +1,462 @@
+{
+  "name": "Company Research Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "company-research",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e8c5f8ad-c98f-4b85-b2f3-dd41dee272fe",
+      "name": "Webhook",
+      "webhookId": "e2678d84-4670-4f75-95fd-a58aa6337407"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "58552699-1d5c-41ec-84ee-24e38f2ddbd2",
+              "name": "domain",
+              "value": "={{ $json.domain.toLowerCase().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "e9d99f58-1f50-4799-9dba-7083c1b36f2b",
+              "name": "website",
+              "value": "=https://{{ $json.domain.toLowerCase().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "e8cdb0b6-8a59-4cd1-98ef-d5143461b776",
+              "name": "received_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "8cca9e86-2163-4174-a8c7-f92abf473ff4",
+      "name": "Get Domain and Site"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a company research assistant. Return only valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Research the company with domain {{ $('Split Out').item.json.domain }}. Return this exact JSON format: {\\\"company_name\\\": \\\"\\\", \\\"industry\\\": \\\"\\\", \\\"company_size\\\": \\\"\\\", \\\"description\\\": \\\"\\\", \\\"headquarters\\\": \\\"\\\", \\\"linkedin\\\": \\\"\\\"}\"\n    }\n  ],\n  \"temperature\": 0.3\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        656,
+        0
+      ],
+      "id": "ef460e5a-0d1c-4d9d-b96a-e54216f4f6ab",
+      "name": "Get full Data",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cfWeuDAnp7ov6Wxt",
+          "name": "Header Auth account"
+        },
+        "httpBasicAuth": {
+          "id": "6LWnXHLFmpPUhLih",
+          "name": "n8n webhook test basic auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0a99fee-b5ab-43bf-a1d6-c414ef23fd63",
+              "name": "company_name",
+              "value": "={{ JSON.parse($json.choices[0].message.content).company_name }}",
+              "type": "string"
+            },
+            {
+              "id": "a5b6d967-b25a-4748-a6aa-8c5eb3ca40d1",
+              "name": "industry",
+              "value": "={{ JSON.parse($json.choices[0].message.content).industry }}",
+              "type": "string"
+            },
+            {
+              "id": "3d4e8b3b-179d-4241-9fa7-40699173f951",
+              "name": "company_size",
+              "value": "={{ JSON.parse($json.choices[0].message.content).company_size }}",
+              "type": "string"
+            },
+            {
+              "id": "b6a15143-3019-4697-a6ce-247f45e886e4",
+              "name": "description",
+              "value": "={{ JSON.parse($json.choices[0].message.content).description }}",
+              "type": "string"
+            },
+            {
+              "id": "1ec92c92-fb4d-457e-a245-379aad53739d",
+              "name": "headquarters",
+              "value": "={{ JSON.parse($json.choices[0].message.content).headquarters }}",
+              "type": "string"
+            },
+            {
+              "id": "d86bb5af-a21b-4fe1-9d0e-9ed7a8e42681",
+              "name": "linkedIn",
+              "value": "={{ JSON.parse($json.choices[0].message.content).linkedin }}",
+              "type": "string"
+            },
+            {
+              "id": "ce29f900-d230-41ef-b3d5-4f2f74bb6ae9",
+              "name": "domain",
+              "value": "={{ $('Get Domain and Site').item.json.domain }}",
+              "type": "string"
+            },
+            {
+              "id": "184be203-a9e0-45d7-9f99-4a8210629724",
+              "name": "website",
+              "value": "={{ $('Get Domain and Site').item.json.website }}",
+              "type": "string"
+            },
+            {
+              "id": "0a332b5f-8588-4a48-a307-202df02744c6",
+              "name": "received_at",
+              "value": "={{ $('Get Domain and Site').item.json.received_at }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        880,
+        0
+      ],
+      "id": "0f4c46cf-85a5-417a-a46f-f77b5a96467b",
+      "name": "Format Data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54491642-5c4c-469d-8aca-8ee56435ee9c",
+              "name": "score",
+              "value": "={{ \n  0\n  + ($json.company_name ? 20 : 0)\n  + ($json.industry ? 20 : 0)\n  + ($json.company_size ? 15 : 0)\n  + ($json.description ? 15 : 0)\n  + ($json.linkedin ? 15 : 0)\n  + ($json.headquarters ? 15 : 0)\n}}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1088,
+        0
+      ],
+      "id": "a7228704-9068-4019-9777-b352eb37b0bf",
+      "name": "Calculate Score"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5e2d3d8a-3fb0-46e0-b266-180d6df31149",
+              "name": "fit",
+              "value": "={{ \n  Number($json.score) >= 80 ? \"High Fit\" : \n  Number($json.score) >= 50 ? \"Medium Fit\" : \"Low Fit\" \n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        16,
+        224
+      ],
+      "id": "7fc2e344-f852-4622-9107-9f6aaa32a5f8",
+      "name": "Calculate Fit"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12zQIPdxGwfs6SMJz4rBLs-FYR66-OXJvAno3rEwM0Ts",
+          "mode": "list",
+          "cachedResultName": "Company Research",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12zQIPdxGwfs6SMJz4rBLs-FYR66-OXJvAno3rEwM0Ts/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12zQIPdxGwfs6SMJz4rBLs-FYR66-OXJvAno3rEwM0Ts/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Domain": "={{ $('Format Data').item.json.domain }}",
+            "Company Name": "={{ $('Format Data').item.json.company_name }}",
+            "Industry": "={{ $('Format Data').item.json.industry }}",
+            "Size": "={{ $('Format Data').item.json.company_size }}",
+            "Score": "={{ $('Calculate Score').item.json.score }}",
+            "Fit": "={{ $json.fit }}"
+          },
+          "matchingColumns": [
+            "Domain"
+          ],
+          "schema": [
+            {
+              "id": "Domain",
+              "displayName": "Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Size",
+              "displayName": "Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Fit",
+              "displayName": "Fit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        224
+      ],
+      "id": "934bbd7c-105d-4220-a390-1e29e3d17845",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bAu6vRpOcZNBL5PP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "company",
+        "name": "={{ $('Format Data').item.json.company_name }}",
+        "additionalFields": {
+          "companyDomainName": "={{ $('Split Out').item.json.domain }}",
+          "description": "={{ $('Format Data').item.json.description }}",
+          "linkedInCompanyPage": "={{ $('Format Data').item.json.linkedIn }}",
+          "numberOfEmployees": "={{ parseInt($('Format Data').item.json.company_size.match(/\\d+/g)[1]) }}",
+          "websiteUrl": "={{ $('Format Data').item.json.website }}"
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        432,
+        224
+      ],
+      "id": "75efbab2-84ac-4173-8453-09e727bde4f8",
+      "name": "Create a company",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "wlONXEgwKiB0cvp5",
+          "name": "HubSpot Service Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.companies",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "5ddeaf57-66c6-4274-a13d-80116fbef5c5",
+      "name": "Split Out"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Domain and Site": {
+      "main": [
+        [
+          {
+            "node": "Get full Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get full Data": {
+      "main": [
+        [
+          {
+            "node": "Format Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Score": {
+      "main": [
+        [
+          {
+            "node": "Calculate Fit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Fit": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Create a company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Get Domain and Site",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3d6684e4-e8a1-45fb-806e-754bd6f79a58",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "97ba047ece138706d8aac0b8f5911f5777b8fac1e992a8316775482fa3362bb8"
+  },
+  "nodeGroups": [],
+  "id": "Ogj0QYQfrlv92VnM",
+  "tags": []
+}

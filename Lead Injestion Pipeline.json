@@ -1,0 +1,678 @@
+{
+  "name": "Lead Injestion Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-lead",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1296,
+        -368
+      ],
+      "id": "70f4f5ce-c669-411e-933a-e305bbf462d5",
+      "name": "Webhook",
+      "webhookId": "2dc30acc-97f1-482b-a5ae-0ddda6fde6e1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b8d0295-bff7-4b75-96e0-16b6f076d858",
+              "name": "name",
+              "value": "={{ $json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "6bdb0863-1594-4280-bd04-8ed867a3109b",
+              "name": "email",
+              "value": "={{ $json.body.email.toLowerCase().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "bc0afa8b-66ac-4deb-9b81-ce292d1780e9",
+              "name": "company",
+              "value": "={{ $json.body.company.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "89bfaebf-12f9-41d9-bd8c-400a55daf068",
+              "name": "source",
+              "value": "={{ $json.body.source }}",
+              "type": "string"
+            },
+            {
+              "id": "72bf4f00-cb8d-4d5d-8f13-bfa3717c5990",
+              "name": "full_name",
+              "value": "={{ $json.body.name.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "f693618d-646b-4c06-b327-544e603ad0cd",
+              "name": "received_at",
+              "value": "={{ $now .toISO()}}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1072,
+        -368
+      ],
+      "id": "0d1d8bf9-7d43-490f-96e8-f7b9fa8e9169",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0778e82b-8566-42e0-bb75-1a2a4d2ac499",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c630ba61-ffa5-4de6-8d91-d590c828a6f7",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "54b192f5-c202-4c45-adaf-eab05c0952d5",
+              "leftValue": "={{ $json.company }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -848,
+        -368
+      ],
+      "id": "d0382a74-f821-4978-be11-f8981e9c1ff1",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a helpful assistant that enriches company data. Return only valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Based on the company name '{{ $json.company }}', guess the industry and approximate company size (e.g. 1-10, 11-50, 51-200, 201-500, 500+). Return only this JSON format: {\\\"industry\\\": \\\"...\\\", \\\"company_size\\\": \\\"...\\\"}\"\n    }\n  ],\n  \"temperature\": 0.3\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -624,
+        -384
+      ],
+      "id": "f526ee0b-a7e9-4b57-96a0-ed916ac079a4",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cfWeuDAnp7ov6Wxt",
+          "name": "Header Auth account"
+        },
+        "httpBasicAuth": {
+          "id": "6LWnXHLFmpPUhLih",
+          "name": "n8n webhook test basic auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4b340ef2-9f3a-44f6-b156-764da598bd2f",
+              "name": "industry",
+              "value": "={{ JSON.parse($json.choices[0].message.content).industry }}",
+              "type": "string"
+            },
+            {
+              "id": "b88b704e-0177-44a7-9f72-62bed5df965a",
+              "name": "company_size",
+              "value": "={{ JSON.parse($json.choices[0].message.content).company_size }}",
+              "type": "string"
+            },
+            {
+              "id": "3ef4554d-769f-4523-af0d-b60abb4d329f",
+              "name": "name",
+              "value": "={{ $('Edit Fields').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "650d173b-baa5-471c-b90a-67afe3769039",
+              "name": "email",
+              "value": "={{ $('Edit Fields').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "dd2b0c32-f139-4bee-b4c8-f186b8cba4c2",
+              "name": "company",
+              "value": "={{ $('Edit Fields').item.json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "2d3576cf-9f8c-454a-b26f-23a06a003d12",
+              "name": "source",
+              "value": "={{ $('Edit Fields').item.json.source }}",
+              "type": "string"
+            },
+            {
+              "id": "45dcabe6-c0b1-4558-9e64-c88dc14cb7b7",
+              "name": "full_name",
+              "value": "={{ $('Edit Fields').item.json.full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "2361c44e-2deb-4095-bdd1-2e9817e2fc65",
+              "name": "received_at",
+              "value": "={{ $('Edit Fields').item.json.received_at }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -400,
+        -384
+      ],
+      "id": "3f1bcd89-694a-4c0e-85e2-06f69eadb917",
+      "name": "Full Name Received"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4143e4f7-af9f-496f-87cc-4edd515186fd",
+              "name": "score",
+              "value": "={{ \n  0 \n  + ($json.company ? 30 : 0) \n  + ($json.email ? 20 : 0) \n  + ([\"Website\", \"LinkedIn\"].includes($json.source) ? 10 : 0)\n  + ([\"51-200\", \"201-500\", \"500+\"].includes($json.company_size) ? 15 : 0)\n}}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1248,
+        -128
+      ],
+      "id": "d7877a62-4dab-431c-881a-d429dc345122",
+      "name": "Score"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e1dbab7-91e5-4844-97ca-ccbc571a5e2d",
+              "name": "Grade",
+              "value": "={{    Number($json.score) >= 60 ? \"Hot\" :    Number($json.score) >= 40 ? \"Warm\" : \"Cold\"  }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1040,
+        -128
+      ],
+      "id": "28a787da-16f2-41c3-a094-90fadb6254e1",
+      "name": "Grade"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1CZ1Ju7a80XtDRFwwBIPctHs1TrwVwDM342xqqt-sJv4",
+          "mode": "list",
+          "cachedResultName": "Lead pipeline",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CZ1Ju7a80XtDRFwwBIPctHs1TrwVwDM342xqqt-sJv4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CZ1Ju7a80XtDRFwwBIPctHs1TrwVwDM342xqqt-sJv4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $('Full Name Received').item.json.received_at }}",
+            "Name": "={{ $('Full Name Received').item.json.name }}",
+            "Email": "={{ $('Full Name Received').item.json.email }}",
+            "Company": "={{ $('Full Name Received').item.json.company }}",
+            "Industry": "={{ $('Full Name Received').item.json.industry }}",
+            "Company Size": "={{ $('Full Name Received').item.json.company_size }}",
+            "Source": "={{ $('Full Name Received').item.json.source }}",
+            "Score": "={{ $('Score').item.json.score }}",
+            "Grade": "={{ $json.Grade }}"
+          },
+          "matchingColumns": [
+            "Timestamp"
+          ],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Grade",
+              "displayName": "Grade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -816,
+        -128
+      ],
+      "id": "65164be9-874a-410a-a406-1927ae8ff90b",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "bAu6vRpOcZNBL5PP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "320af7cc-7ec7-4173-992b-48ed11051904",
+              "leftValue": "={{ $json.Grade }}",
+              "rightValue": "Warm",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -592,
+        -128
+      ],
+      "id": "179033c2-8e4a-41a5-b971-999575c91a18",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "chatId": "1589344999",
+        "text": "=🔥 New Hot Lead!  Name: {{ $('Append or update row in sheet').item.json.Name }} Email: {{ $('Append or update row in sheet').item.json.Email }} Company: {{ $('Append or update row in sheet').item.json.Company }} Industry: {{ $('Append or update row in sheet').item.json.Industry }} Score: {{ $('Append or update row in sheet').item.json.Score }} Source: {{ $('Append or update row in sheet').item.json.Source }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        -144
+      ],
+      "id": "9f93180d-f1c7-4ec8-96f4-fd1b204dea6f",
+      "name": "Send a text message",
+      "webhookId": "bf2bc6bc-684b-41b3-8ede-6e94ab119f3a",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "CemY7tMGqZv1BZTe",
+          "name": "Telegram demo"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $('Edit Fields').item.json.email }}",
+        "additionalFields": {
+          "companyName": "={{ $('Edit Fields').item.json.company }}",
+          "firstName": "={{ $('Edit Fields').item.json.name.split(' ')[0] }}",
+          "lastName": "={{ $('Edit Fields').item.json.name.split(' ').slice(1).join(' ') }}\n"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        -144,
+        -144
+      ],
+      "id": "70ffc91c-e962-4e43-8043-a14b9340a297",
+      "name": "Create or update a contact",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "wlONXEgwKiB0cvp5",
+          "name": "HubSpot Service Key"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Edit Fields": [
+      {
+        "json": {
+          "name": "Rahul Sharma",
+          "email": "rahul@example.com",
+          "company": "TechNova",
+          "source": "Website",
+          "full_name": "Rahul Sharma",
+          "received_at": "2026-10-20T08:10:52.469-04:00"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Full Name Received": [
+      {
+        "json": {
+          "industry": "Technology",
+          "company_size": "51-200",
+          "name": "Rahul Sharma",
+          "email": "rahul@example.com",
+          "company": "TechNova",
+          "source": "Website",
+          "full_name": "Rahul Sharma",
+          "received_at": "2026-10-20T08:10:52.469-04:00"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "Append or update row in sheet": [
+      {
+        "json": {
+          "Timestamp": "2026-10-20T08:10:52.469-04:00",
+          "Name": "Rahul Sharma",
+          "Email": "rahul@example.com",
+          "Company": "TechNova",
+          "Industry": "Technology",
+          "Company Size": "51-200",
+          "Source": "Website",
+          "Score": 75,
+          "Grade": "Hot"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Full Name Received",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Full Name Received": {
+      "main": [
+        [
+          {
+            "node": "Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score": {
+      "main": [
+        [
+          {
+            "node": "Grade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grade": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Create or update a contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "6ef77271-0393-4a3e-842f-3737e8d2f413",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "97ba047ece138706d8aac0b8f5911f5777b8fac1e992a8316775482fa3362bb8"
+  },
+  "nodeGroups": [],
+  "id": "fEDDGsHHaIdEg2nM",
+  "tags": []
+}
