@@ -29,7 +29,7 @@ Engineered an event-driven, real-time Lead Injection Pipeline that captures, cle
 | **Orchestration** | self-hosted n8n (Docker) | Data transformation, conditional logic, and workflow automation |
 | **Enrichment** | OpenAI API | Dynamic lead scoring and personalized message generation |
 | **Storage & Sync** | HubSpot CRM API | Automated contact creation and property mapping |
-| **Alerting** | Slack / Discord Node | Real-time team notifications for high-scoring leads |
+| **Alerting** | Telegram Bot API | Real-time team notifications for high-scoring leads |
 
 ### Results
 * **98% Reduction in Speed-to-Lead:** Decreased time-from-intent to sales outreach from 48 hours to under 3 minutes.
